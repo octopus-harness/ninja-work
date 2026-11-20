@@ -666,22 +666,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ninja-work"
-version = "1.0.0"
-dependencies = [
- "anyhow",
- "arboard",
- "chrono",
- "clap",
- "crossterm",
- "ratatui",
- "serde",
- "serde_json",
- "tempfile",
- "unicode-width",
-]
-
-[[package]]
 name = "num-traits"
 version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -761,6 +745,22 @@ dependencies = [
  "bitflags",
  "objc2",
  "objc2-core-foundation",
+]
+
+[[package]]
+name = "octo-work"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "arboard",
+ "chrono",
+ "clap",
+ "crossterm",
+ "ratatui",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "unicode-width",
 ]
 
 [[package]]

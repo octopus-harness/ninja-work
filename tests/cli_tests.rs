@@ -1,6 +1,6 @@
-use ninja_work::cli::{self, Cli, Commands};
-use ninja_work::config::Config;
-use ninja_work::workspace;
+use octo_work::cli::{self, Cli, Commands};
+use octo_work::config::Config;
+use octo_work::workspace;
 use tempfile::tempdir;
 
 #[test]
