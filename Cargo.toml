@@ -1,11 +1,11 @@
 [package]
 name = "octo-work"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 authors = ["Leonid Medovyy <leonid@macron1.io>"]
 description = "A fast, keyboard-driven CLI and TUI workspace manager for Octopus AI agent harnesses"
 readme = "README.md"
-repository = "https://github.com/leouofa/octo-work"
+repository = "https://github.com/octopus-harness/octo-work"
 license = "MIT"
 keywords = ["tui", "cli", "workspace", "octopus", "ratatui"]
 categories = ["command-line-utilities"]
