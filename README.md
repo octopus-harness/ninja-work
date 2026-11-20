@@ -1,4 +1,4 @@
-# 🐙 octo-work (`work`)
+# 🐙 octo-work
 
 <p align="center">
   <strong>A blazing-fast, keyboard-driven workspace manager & 3-pane Ratatui TUI for AI agent harnesses and rapid developer task isolation.</strong>
