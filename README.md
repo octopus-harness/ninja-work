@@ -1,14 +1,14 @@
-# ninja-work (`work`)
+# octo-work (`work`)
 
 ```text
- ▄▄ ▄▄  ▄▄▄▄ ▄▄▄▄▄▄ ▄▄▄▄▄ ▄▄▄ ▄▄▄  ▄▄ ▄▄ ▄▄▄▄  ▄▄▄▄  ▄▄ ▄▄ 
-███▄██   ██   ██ ██   █  ██▀██ ██  ██ ██ ██▀██ ██▄█▀ ██ ██ 
-██▀███ ▄▄██▄▄ ██  █ █▄█  ▀███▀ ▀████▀ ▀█▄█ ▀███▀ ██    ▀███▀ 
+ ▄▄▄▄   ▄▄▄▄  ▄▄▄▄▄▄  ▄▄▄▄          ▄▄ ▄▄  ▄▄▄▄   ▄▄▄▄  ▄▄ ▄▄ 
+██  ██ ██       ██   ██  ██  ▄▄▄▄▄  ██ ██ ██  ██ ██▄█▀ ██ ██ 
+ ▀██▀   ▀████   ██    ▀██▀          ▀███▀  ▀██▀  ██    ▀███▀ 
 ```
 
 A fast, keyboard-driven CLI and 3-pane Ratatui TUI workspace manager for [Octopus](https://github.com/leouofa/octopus) AI agent harnesses.
 
-`ninja-work` provides a compiled drop-in replacement for Octopus's original `bin/work` shell script while expanding it with a full workspace lifecycle engine (`add`, `archive`, `restore`, `rename`, `delete`, `list`, `path`, `init`) and a companion terminal dashboard modeled after `doer-tui` and `noteking-tui`.
+`octo-work` provides a compiled drop-in replacement for Octopus's original `bin/work` shell script while expanding it with a full workspace lifecycle engine (`add`, `archive`, `restore`, `rename`, `delete`, `list`, `path`, `init`) and a companion terminal dashboard modeled after `doer-tui` and `noteking-tui`.
 
 ---
 
@@ -34,12 +34,22 @@ A fast, keyboard-driven CLI and 3-pane Ratatui TUI workspace manager for [Octopu
 ### From Source
 
 ```bash
-git clone https://github.com/leouofa/ninja-work.git
-cd ninja-work
+git clone https://github.com/octopus-harness/octo-work.git
+cd octo-work
 cargo install --path .
 ```
 
-This installs both the `work` binary (primary command) and the `ninja-work` binary alias into `~/.cargo/bin`.
+This installs both the `work` binary (primary command) and the `octo-work` binary alias into `~/.cargo/bin`.
+
+### Development Symlink
+
+To link the compiled release binary directly to `/usr/local/bin` during development:
+
+```bash
+./scripts/link-dev.sh
+```
+
+This builds `./target/release/octo-work` (if needed) and creates symlinks for `/usr/local/bin/work` and `/usr/local/bin/octo-work`.
 
 ---
 
@@ -142,7 +152,7 @@ work restore q4-planning
 
 In the [Octopus](https://github.com/leouofa/octopus) harness, AI agents isolate ephemeral task files inside `./workspace/<task>` and archive them upon task completion.
 
-Because `ninja-work` exposes the exact same syntax:
+Because `octo-work` exposes the exact same syntax:
 ```bash
 work add <task>
 work archive <task>

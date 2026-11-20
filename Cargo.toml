@@ -1,17 +1,17 @@
 [package]
-name = "ninja-work"
+name = "octo-work"
 version = "1.0.0"
 edition = "2021"
 authors = ["Leonid Medovyy <leonid@macron1.io>"]
 description = "A fast, keyboard-driven CLI and TUI workspace manager for Octopus AI agent harnesses"
 readme = "README.md"
-repository = "https://github.com/leouofa/ninja-work"
+repository = "https://github.com/leouofa/octo-work"
 license = "MIT"
 keywords = ["tui", "cli", "workspace", "octopus", "ratatui"]
 categories = ["command-line-utilities"]
 
 [lib]
-name = "ninja_work"
+name = "octo_work"
 path = "src/lib.rs"
 
 [[bin]]
@@ -19,8 +19,8 @@ name = "work"
 path = "src/bin/work.rs"
 
 [[bin]]
-name = "ninja-work"
-path = "src/bin/ninja-work.rs"
+name = "octo-work"
+path = "src/bin/octo-work.rs"
 
 [dependencies]
 ratatui = "0.28"

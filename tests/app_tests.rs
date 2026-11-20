@@ -1,7 +1,7 @@
-use ninja_work::app::{App, Modal, Pane};
-use ninja_work::config::Config;
-use ninja_work::models::Scope;
-use ninja_work::workspace;
+use octo_work::app::{App, Modal, Pane};
+use octo_work::config::Config;
+use octo_work::models::Scope;
+use octo_work::workspace;
 use crossterm::event::KeyCode;
 use tempfile::tempdir;
 

@@ -1,3 +1,3 @@
 fn main() -> anyhow::Result<()> {
-    ninja_work::runner::run()
+    octo_work::runner::run()
 }
