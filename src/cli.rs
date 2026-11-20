@@ -4,7 +4,7 @@ use crate::models::Scope;
 use crate::workspace;
 use anyhow::{bail, Result};
 use clap::{Parser, Subcommand};
-use std::io::{self, BufRead, Write};
+use std::io::{self, BufRead, IsTerminal, Write};
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -116,6 +116,17 @@ pub fn run_cli(cli: Cli, config: Config) -> Result<()> {
             println!("Initialized workspace directories:");
             println!("  Created {}", config.workspace_dir.display());
             println!("  Created {}", config.archive_dir.display());
+
+            if workspace::is_git_repo(&config.root_dir) && is_interactive_terminal() {
+                if prompt_confirm("Add workspace/ and archive/ to .gitignore? [Y/n]: ", true)? {
+                    let added = workspace::add_to_gitignore(&config.root_dir, &["workspace/", "archive/"])?;
+                    if !added.is_empty() {
+                        println!("  Added to .gitignore: {}", added.join(", "));
+                    } else {
+                        println!("  Patterns already present in .gitignore");
+                    }
+                }
+            }
             Ok(())
         }
         Some(Commands::Add { name }) => {
@@ -343,5 +354,54 @@ fn prompt_select(prompt: &str, options: &[String]) -> Result<String> {
             }
         }
         eprintln!("Invalid selection. Please choose a number between 1 and {}.", options.len());
+    }
+}
+
+fn is_interactive_terminal() -> bool {
+    if !io::stdin().is_terminal() {
+        return false;
+    }
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(s) = exe.to_str() {
+            if s.contains("_tests") || s.contains("/deps/") {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+fn prompt_confirm_from<R: BufRead>(mut reader: R, prompt: &str, default_yes: bool) -> Result<bool> {
+    eprint!("{}", prompt);
+    io::stderr().flush()?;
+    let mut line = String::new();
+    if reader.read_line(&mut line)? == 0 {
+        return Ok(default_yes);
+    }
+    let trimmed = line.trim().to_lowercase();
+    if trimmed.is_empty() {
+        Ok(default_yes)
+    } else {
+        Ok(trimmed == "y" || trimmed == "yes")
+    }
+}
+
+fn prompt_confirm(prompt: &str, default_yes: bool) -> Result<bool> {
+    prompt_confirm_from(io::stdin().lock(), prompt, default_yes)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_prompt_confirm_from() {
+        assert!(prompt_confirm_from("y\n".as_bytes(), "prompt", false).unwrap());
+        assert!(prompt_confirm_from("Y\n".as_bytes(), "prompt", false).unwrap());
+        assert!(prompt_confirm_from("yes\n".as_bytes(), "prompt", false).unwrap());
+        assert!(prompt_confirm_from("\n".as_bytes(), "prompt", true).unwrap());
+        assert!(!prompt_confirm_from("\n".as_bytes(), "prompt", false).unwrap());
+        assert!(!prompt_confirm_from("n\n".as_bytes(), "prompt", true).unwrap());
+        assert!(!prompt_confirm_from("no\n".as_bytes(), "prompt", true).unwrap());
     }
 }

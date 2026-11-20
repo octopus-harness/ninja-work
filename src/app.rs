@@ -46,7 +46,10 @@ pub enum Modal {
     Search {
         input: String,
     },
-    InitDirs,
+    InitDirs {
+        add_to_gitignore: bool,
+        git_detected: bool,
+    },
     Help,
 }
 
@@ -91,7 +94,11 @@ impl App {
         };
 
         if workspace::require_dirs(&app.config).is_err() {
-            app.modal = Some(Modal::InitDirs);
+            let git_detected = workspace::is_git_repo(&app.config.root_dir);
+            app.modal = Some(Modal::InitDirs {
+                add_to_gitignore: git_detected,
+                git_detected,
+            });
         } else {
             app.reload_workspaces();
         }
@@ -525,11 +532,45 @@ impl App {
         };
 
         match modal {
-            Modal::InitDirs => match key {
+            Modal::InitDirs {
+                add_to_gitignore,
+                git_detected,
+            } => match key {
+                KeyCode::Char(' ') if git_detected => {
+                    self.modal = Some(Modal::InitDirs {
+                        add_to_gitignore: !add_to_gitignore,
+                        git_detected,
+                    });
+                }
                 KeyCode::Enter | KeyCode::Char('y') | KeyCode::Char('i') => {
                     match workspace::init_dirs(&self.config) {
                         Ok(()) => {
-                            self.set_status("Initialized workspace and archive directories.", false);
+                            let mut msg =
+                                "Initialized workspace and archive directories.".to_string();
+                            if add_to_gitignore {
+                                match workspace::add_to_gitignore(
+                                    &self.config.root_dir,
+                                    &["workspace/", "archive/"],
+                                ) {
+                                    Ok(added) => {
+                                        if !added.is_empty() {
+                                            msg.push_str(" Added to .gitignore.");
+                                        }
+                                    }
+                                    Err(e) => {
+                                        self.set_status(
+                                            format!(
+                                                "Initialized dirs, but failed to update .gitignore: {}",
+                                                e
+                                            ),
+                                            true,
+                                        );
+                                        self.reload_workspaces();
+                                        return;
+                                    }
+                                }
+                            }
+                            self.set_status(msg, false);
                             self.reload_workspaces();
                         }
                         Err(e) => {
@@ -541,7 +582,10 @@ impl App {
                     self.should_quit = true;
                 }
                 _ => {
-                    self.modal = Some(Modal::InitDirs);
+                    self.modal = Some(Modal::InitDirs {
+                        add_to_gitignore,
+                        git_detected,
+                    });
                 }
             },
             Modal::Help => match key {

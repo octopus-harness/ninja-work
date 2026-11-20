@@ -14,7 +14,10 @@ pub fn render(f: &mut Frame, app: &App) {
     };
 
     match modal {
-        Modal::InitDirs => render_init_dirs(f, app),
+        Modal::InitDirs {
+            add_to_gitignore,
+            git_detected,
+        } => render_init_dirs(f, app, *add_to_gitignore, *git_detected),
         Modal::Help => render_help(f),
         Modal::Search { input } => render_search(f, input),
         Modal::AddWorkspace { input } => render_add_workspace(f, input),
@@ -56,8 +59,13 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         .split(popup_layout[1])[1]
 }
 
-fn render_init_dirs(f: &mut Frame, app: &App) {
-    let area = centered_rect(60, 30, f.area());
+fn render_init_dirs(
+    f: &mut Frame,
+    app: &App,
+    add_to_gitignore: bool,
+    git_detected: bool,
+) {
+    let area = centered_rect(65, 35, f.area());
     f.render_widget(Clear, area);
 
     let block = Block::default()
@@ -69,7 +77,7 @@ fn render_init_dirs(f: &mut Frame, app: &App) {
     let inner = block.inner(area);
     f.render_widget(block, area);
 
-    let lines = vec![
+    let mut lines = vec![
         Line::from(Span::styled(
             "The required workspace directories were not found:",
             Style::default().fg(Color::LightYellow),
@@ -89,28 +97,72 @@ fn render_init_dirs(f: &mut Frame, app: &App) {
                 Style::default().fg(Color::Cyan),
             ),
         ]),
-        Line::from(""),
-        Line::from(vec![
-            Span::styled("Press ", Style::default().fg(Color::DarkGray)),
-            Span::styled(
-                "[Enter]",
+    ];
+
+    if git_detected {
+        lines.push(Line::from(""));
+        let (checkbox, box_style) = if add_to_gitignore {
+            (
+                "[X] ",
                 Style::default()
                     .fg(Color::Green)
                     .add_modifier(Modifier::BOLD),
+            )
+        } else {
+            ("[ ] ", Style::default().fg(Color::DarkGray))
+        };
+        lines.push(Line::from(vec![
+            Span::styled(checkbox, box_style),
+            Span::styled(
+                "Add workspace/ and archive/ to .gitignore ",
+                Style::default().fg(Color::White),
             ),
             Span::styled(
-                " to create directories now, or ",
+                "(Press [Space] to toggle)",
                 Style::default().fg(Color::DarkGray),
             ),
-            Span::styled(
-                "[Esc / q]",
-                Style::default()
-                    .fg(Color::Red)
-                    .add_modifier(Modifier::BOLD),
-            ),
-            Span::styled(" to exit.", Style::default().fg(Color::DarkGray)),
-        ]),
+        ]));
+    }
+
+    lines.push(Line::from(""));
+    let mut footer_spans = vec![
+        Span::styled("Press ", Style::default().fg(Color::DarkGray)),
+        Span::styled(
+            "[Enter]",
+            Style::default()
+                .fg(Color::Green)
+                .add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(
+            " to create directories",
+            Style::default().fg(Color::DarkGray),
+        ),
     ];
+
+    if git_detected {
+        footer_spans.push(Span::styled(", ", Style::default().fg(Color::DarkGray)));
+        footer_spans.push(Span::styled(
+            "[Space]",
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
+        ));
+        footer_spans.push(Span::styled(
+            " to toggle .gitignore",
+            Style::default().fg(Color::DarkGray),
+        ));
+    }
+
+    footer_spans.push(Span::styled(", or ", Style::default().fg(Color::DarkGray)));
+    footer_spans.push(Span::styled(
+        "[Esc / q]",
+        Style::default()
+            .fg(Color::Red)
+            .add_modifier(Modifier::BOLD),
+    ));
+    footer_spans.push(Span::styled(" to exit.", Style::default().fg(Color::DarkGray)));
+
+    lines.push(Line::from(footer_spans));
 
     f.render_widget(Paragraph::new(lines), inner);
 }
