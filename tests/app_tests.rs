@@ -12,7 +12,7 @@ fn test_app_init_and_workspace_lifecycle() {
 
     // Initially directories do not exist, App should show InitDirs modal
     let mut app = App::new(config.clone());
-    assert!(matches!(app.modal, Some(Modal::InitDirs)));
+    assert!(matches!(app.modal, Some(Modal::InitDirs { .. })));
 
     // Press Enter to initialize
     app.handle_key(KeyCode::Enter);
@@ -98,4 +98,60 @@ fn test_app_search_filter() {
     // Clear filter
     app.handle_key(KeyCode::Esc);
     assert_eq!(app.filtered_workspaces.len(), 3);
+}
+
+#[test]
+fn test_app_init_dirs_with_gitignore_toggle() {
+    use std::fs;
+
+    let tmp = tempdir().unwrap();
+    let root = tmp.path();
+    // Simulate git repo
+    fs::create_dir(root.join(".git")).unwrap();
+
+    let config = Config::new(root);
+    let mut app = App::new(config.clone());
+
+    if let Some(Modal::InitDirs {
+        add_to_gitignore,
+        git_detected,
+    }) = app.modal
+    {
+        assert!(git_detected);
+        assert!(add_to_gitignore);
+    } else {
+        panic!("Expected Modal::InitDirs");
+    }
+
+    // Toggle spacebar to uncheck
+    app.handle_key(KeyCode::Char(' '));
+    if let Some(Modal::InitDirs {
+        add_to_gitignore, ..
+    }) = app.modal
+    {
+        assert!(!add_to_gitignore);
+    } else {
+        panic!("Expected Modal::InitDirs after toggle");
+    }
+
+    // Toggle spacebar back to checked
+    app.handle_key(KeyCode::Char(' '));
+    if let Some(Modal::InitDirs {
+        add_to_gitignore, ..
+    }) = app.modal
+    {
+        assert!(add_to_gitignore);
+    } else {
+        panic!("Expected Modal::InitDirs after toggle");
+    }
+
+    // Press Enter to initialize
+    app.handle_key(KeyCode::Enter);
+    assert!(app.modal.is_none());
+    assert!(workspace::require_dirs(&config).is_ok());
+
+    // Verify .gitignore was created with patterns
+    let gitignore_content = fs::read_to_string(root.join(".gitignore")).unwrap();
+    assert_eq!(gitignore_content, "workspace/\narchive/\n");
+    assert!(app.status.as_ref().unwrap().0.contains("Added to .gitignore"));
 }

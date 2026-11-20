@@ -44,6 +44,69 @@ pub fn init_dirs(config: &Config) -> Result<()> {
     Ok(())
 }
 
+pub fn is_git_repo(root: &Path) -> bool {
+    let mut curr = if let Ok(abs) = fs::canonicalize(root) {
+        abs
+    } else {
+        root.to_path_buf()
+    };
+
+    loop {
+        if curr.join(".git").exists() || curr.join(".gitignore").exists() {
+            return true;
+        }
+        if !curr.pop() {
+            break;
+        }
+    }
+    false
+}
+
+pub fn add_to_gitignore(root: &Path, patterns: &[&str]) -> Result<Vec<String>> {
+    let gitignore_path = root.join(".gitignore");
+    let existing_content = if gitignore_path.exists() {
+        fs::read_to_string(&gitignore_path)
+            .with_context(|| format!("Failed to read {}", gitignore_path.display()))?
+    } else {
+        String::new()
+    };
+
+    let existing_lines: Vec<&str> = existing_content.lines().map(|l| l.trim()).collect();
+    let mut to_add = Vec::new();
+
+    for &pattern in patterns {
+        let trimmed_pat = pattern.trim();
+        let pat_without_slash = trimmed_pat.trim_matches('/');
+
+        let already_present = existing_lines.iter().any(|&line| {
+            let line_clean = line.trim_matches('/');
+            line == trimmed_pat || line_clean == pat_without_slash
+        });
+
+        if !already_present {
+            to_add.push(trimmed_pat.to_string());
+        }
+    }
+
+    if to_add.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let mut new_content = existing_content;
+    if !new_content.is_empty() && !new_content.ends_with('\n') {
+        new_content.push('\n');
+    }
+    for pat in &to_add {
+        new_content.push_str(pat);
+        new_content.push('\n');
+    }
+
+    fs::write(&gitignore_path, new_content)
+        .with_context(|| format!("Failed to write {}", gitignore_path.display()))?;
+
+    Ok(to_add)
+}
+
 pub fn add_workspace(config: &Config, name: &str) -> Result<PathBuf> {
     require_dirs(config)?;
     validate_name(name)?;
@@ -548,5 +611,51 @@ mod tests {
             restored_path.file_name().unwrap().to_str().unwrap(),
             "test-ws"
         );
+    }
+
+    #[test]
+    fn test_is_git_repo() {
+        let tmp = tempdir().unwrap();
+        let root = tmp.path();
+
+        // Not a git repo initially
+        assert!(!is_git_repo(root));
+
+        // Create .git directory
+        fs::create_dir(root.join(".git")).unwrap();
+        assert!(is_git_repo(root));
+
+        // Subdirectory check
+        let sub = root.join("some").join("nested");
+        fs::create_dir_all(&sub).unwrap();
+        assert!(is_git_repo(&sub));
+    }
+
+    #[test]
+    fn test_add_to_gitignore() {
+        let tmp = tempdir().unwrap();
+        let root = tmp.path();
+
+        // Fresh add
+        let added = add_to_gitignore(root, &["workspace/", "archive/"]).unwrap();
+        assert_eq!(added, vec!["workspace/", "archive/"]);
+
+        let content = fs::read_to_string(root.join(".gitignore")).unwrap();
+        assert_eq!(content, "workspace/\narchive/\n");
+
+        // Duplicate add should be idempotent
+        let added_again = add_to_gitignore(root, &["workspace/", "archive/"]).unwrap();
+        assert!(added_again.is_empty());
+        let content_after = fs::read_to_string(root.join(".gitignore")).unwrap();
+        assert_eq!(content_after, "workspace/\narchive/\n");
+
+        // Existing file without trailing newline and with partial coverage
+        let tmp2 = tempdir().unwrap();
+        let root2 = tmp2.path();
+        fs::write(root2.join(".gitignore"), "target\n/workspace").unwrap();
+        let added2 = add_to_gitignore(root2, &["workspace/", "archive/"]).unwrap();
+        assert_eq!(added2, vec!["archive/"]);
+        let content2 = fs::read_to_string(root2.join(".gitignore")).unwrap();
+        assert_eq!(content2, "target\n/workspace\narchive/\n");
     }
 }

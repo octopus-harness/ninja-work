@@ -106,3 +106,24 @@ fn test_cli_lifecycle() {
     .unwrap();
     assert!(!config.workspace_dir.join("renamed-project").exists());
 }
+
+#[test]
+fn test_cli_init_in_git_repo_non_interactive() {
+    use std::fs;
+    let tmp = tempdir().unwrap();
+    let root = tmp.path().to_path_buf();
+    fs::create_dir(root.join(".git")).unwrap();
+    let config = Config::new(&root);
+
+    // Run CLI Init non-interactively (stdin is not terminal in tests)
+    cli::run_cli(
+        Cli {
+            root: Some(root.clone()),
+            command: Some(Commands::Init),
+        },
+        config.clone(),
+    )
+    .unwrap();
+
+    assert!(workspace::require_dirs(&config).is_ok());
+}
