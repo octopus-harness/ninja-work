@@ -1,6 +1,6 @@
 [package]
 name = "octo-work"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 authors = ["Leonid Medovyy <leonid@macron1.io>"]
 description = "A fast, keyboard-driven CLI and TUI workspace manager for Octopus AI agent harnesses"
